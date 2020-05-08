@@ -58,3 +58,5 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+# Wwise Stuff
+Digital-Audio-Unity-Audio-Integration-Exercise\WAG_No_Sound\Assets\Wwise
