@@ -10,7 +10,6 @@ public class Main_Scene_Music_Manager : MonoBehaviour
     void Start()
     {
         //Get our day music and loop & play
-        
         day_loop.loop = true;
         day_loop.Play(0);
     }

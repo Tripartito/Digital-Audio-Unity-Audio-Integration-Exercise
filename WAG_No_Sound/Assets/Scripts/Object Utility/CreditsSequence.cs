@@ -30,15 +30,23 @@ public class CreditsSequence : MonoBehaviour
     public AK.Wwise.Event MusicEvent;
     public AK.Wwise.Bank SoundBank;
 
+    [Header("Exercise Customization")]
+    public GameObject music_manager;
+
     #region private variables
     private Animator canvAnim;
     private PlayerCamera camScript;
     private readonly int fadeOutHash = Animator.StringToHash("FadeOut");
     #endregion
+    private Credits_Script music_manager_script;
+    private AudioSource music_manager_song;
 
     private void Awake()
     {
         SoundBank.Load(false, false);
+
+        //get The script we will use to fade music out
+        music_manager_script = music_manager.GetComponent<Credits_Script>();
     }
 
     void Start()
@@ -114,6 +122,7 @@ public class CreditsSequence : MonoBehaviour
     {
         canvAnim.speed = 5f;
         canvAnim.SetTrigger(fadeOutHash);
+        StartCoroutine(music_manager_script.FadeOutGOAudioSource(2.0f));
     }
 
     private void OnDestroy()
