@@ -21,6 +21,8 @@ namespace QuestSystem
 
         public AK.Wwise.RTPC QuestlineProgressionRTPC;
         public AK.Wwise.Event QuestlineCompleteEvent;
+        public AudioSource QuestlineCompleteEv;
+        public AudioSource TaskCompleteEv;
         //public AK.Wwise.Event QuestlineAdvancedEvent;
 
         public bool StartQuestLineOnStart = true;
@@ -86,11 +88,14 @@ namespace QuestSystem
             currentQuestIdx++;
             if (currentQuestIdx < Quests.Count)
             {
+                Debug.Log(gameObject.name);
+                QuestlineCompleteEv.Play();
                 QuestlineCompleteEvent.Post(gameObject);
                 InitializeQuest(currentQuestIdx);
             }
             else
             {
+                QuestlineCompleteEv.Play();
                 QuestlineCompleteEvent.Post(gameObject);
                 if (OnQuestlineComplete != null)
                 {
@@ -124,6 +129,7 @@ namespace QuestSystem
             {
                 if (sign > 0)   //Moving forwards in the questline
                 {
+                    TaskCompleteEv.Play();
                     yield return Quests[currentQuestIdx].ForceCompleteQuest();
                     i = currentQuestIdx;
                     //yield return Quests[i].ForceCompleteQuest();
@@ -166,6 +172,11 @@ namespace QuestSystem
         public float GetNormalizedQuestlineProgress()
         {
             return ((float)currentQuestIdx / (float)(Quests.Count - 1));
+        }
+
+        public void playtaskcomplete()
+        {
+            TaskCompleteEv.Play();
         }
     }
 }
