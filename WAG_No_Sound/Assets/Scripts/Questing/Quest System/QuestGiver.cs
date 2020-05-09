@@ -129,7 +129,6 @@ namespace QuestSystem
             {
                 if (sign > 0)   //Moving forwards in the questline
                 {
-                    TaskCompleteEv.Play();
                     yield return Quests[currentQuestIdx].ForceCompleteQuest();
                     i = currentQuestIdx;
                     //yield return Quests[i].ForceCompleteQuest();
