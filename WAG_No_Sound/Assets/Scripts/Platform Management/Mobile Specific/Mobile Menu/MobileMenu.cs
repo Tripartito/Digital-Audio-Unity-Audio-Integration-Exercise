@@ -33,7 +33,12 @@ public class MobileMenu : MonoBehaviour
         StartCoroutine(SetInitialPosition());
     }
 
-    public void SetMenu(bool active){
+    private void Update()
+    {
+
+    }
+
+    public void SetMenu(bool active) {
         if (active == isOpen) { return; }
 
         if (tweenRoutine != null)
@@ -69,4 +74,5 @@ public class MobileMenu : MonoBehaviour
         closedPosition.y = rectTransform.sizeDelta.y + 30f;
         rectTransform.anchoredPosition = closedPosition;
     }
+
 }
