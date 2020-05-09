@@ -60,6 +60,11 @@ public class Inventory : MonoBehaviour
     public AK.Wwise.Event InventoryClosedSound;
     public AK.Wwise.Event InventorySelectSound;
 
+    public AudioSource InventoryOpenedSource;
+    public AudioSource InventoryClosedSource;
+    public AudioSource InventorySelectSource;
+    public AudioSource InventoryScrollSource;
+
     #region private variables
     private bool hasShown = false;
     private int SelectIncrementor_Row1 = 0;
@@ -564,6 +569,8 @@ public class Inventory : MonoBehaviour
     {
         if (!hasShown)
         {
+            InventoryOpenedSource.gameObject.SetActive(true);
+            InventoryOpenedSource.Play();
             InputManager.OnUpArrowDown += OnArrowUp;
             InputManager.OnDownArrowDown += OnArrowDown;
             PlayerManager.Instance.cameraScript.FreezeAndShowCursor(true, gameObject);
@@ -662,6 +669,9 @@ public class Inventory : MonoBehaviour
     {
         if (hasShown)
         {
+            InventoryClosedSource.gameObject.SetActive(true);
+            InventoryClosedSource.Play();
+
             InputManager.OnUpArrowDown -= OnArrowUp;
             InputManager.OnDownArrowDown -= OnArrowDown;
             PlayerManager.Instance.cameraScript.FreezeAndShowCursor(false, gameObject);
@@ -765,6 +775,7 @@ public class Inventory : MonoBehaviour
     }
     void ArrowPressLeft()
     {
+
         if (CanPressLefts[SelectedRow])
         {
             InversedIncrement(SelectedRow);
@@ -793,6 +804,9 @@ public class Inventory : MonoBehaviour
 
         if (Panel.activeInHierarchy && hasShown)
         {
+            InventoryScrollSource.gameObject.SetActive(true);
+            InventoryScrollSource.Play();
+
             if (layer == 0)
             {
                 SelectIncrementor_Row1++;
@@ -816,6 +830,9 @@ public class Inventory : MonoBehaviour
         InventorySelectSound.Post(gameObject);
         if (Panel.activeInHierarchy && hasShown)
         {
+            InventoryScrollSource.gameObject.SetActive(true);
+            InventoryScrollSource.Play();
+
             if (layer == 0)
             {
                 SelectIncrementor_Row1--;

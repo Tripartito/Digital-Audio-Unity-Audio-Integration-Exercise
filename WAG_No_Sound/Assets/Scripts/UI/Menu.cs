@@ -27,6 +27,8 @@ public class Menu : MonoBehaviour
 
     public MenuEvent OnMenuDown;
 
+    public AudioSource test;
+
     private bool menuOpen = false;
 
     public void Update()
