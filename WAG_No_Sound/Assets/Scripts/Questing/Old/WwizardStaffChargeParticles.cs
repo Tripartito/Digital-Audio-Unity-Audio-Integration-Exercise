@@ -6,10 +6,14 @@
 
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class WwizardStaffChargeParticles : MonoBehaviour
 {
+    public AudioSource wizardAudioSource;
+    private AudioClip[] wizardChargeClips;
+
     [Header("Wwise")]
     public AK.Wwise.Event StartChargeEvent;
     public AK.Wwise.Event EndChargeEvent;
@@ -33,6 +37,18 @@ public class WwizardStaffChargeParticles : MonoBehaviour
     private IEnumerator chargeRoutine;
     #endregion
 
+    public void Awake()
+    {
+        wizardAudioSource = GameObject.Find("Wwizard").GetComponent<AudioSource>();
+        wizardChargeClips = new AudioClip[4]
+        {
+            Resources.Load("Cinematic/BAS_CIN_RuneCharge_Loop") as AudioClip,
+            Resources.Load("Wwizard/BAS_rune_charge_end_01") as AudioClip,
+            Resources.Load("Wwizard/BAS_rune_charge_end_02") as AudioClip,
+            Resources.Load("Wwizard/BAS_rune_charge_end_03") as AudioClip
+        };
+    }
+
     void OnEnable()
     {
         if (lineRenderer == null)
@@ -43,6 +59,11 @@ public class WwizardStaffChargeParticles : MonoBehaviour
         if (endPoint != null)
         {
             StartChargeEvent.Post(endPoint.gameObject);
+
+            wizardAudioSource.loop = true;
+            wizardAudioSource.clip = wizardChargeClips[0];
+            wizardAudioSource.Play();
+
             chargeRoutine = AnimatePoints();
             StartCoroutine(chargeRoutine);
 
@@ -80,6 +101,12 @@ public class WwizardStaffChargeParticles : MonoBehaviour
     void OnDisable()
     {
         EndChargeEvent.Post(endPoint.gameObject);
+
+        wizardAudioSource.Stop();
+        wizardAudioSource.loop = false;
+
+        wizardAudioSource.PlayOneShot(wizardChargeClips[Random.Range(1, 4)]);
+
         StopCoroutine(chargeRoutine);
         if (lineRenderer != null)
         {

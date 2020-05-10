@@ -10,6 +10,9 @@ using System.Collections.Generic;
 
 public class DefaultSpellcraft : MonoBehaviour
 {
+    private AudioSource playerAudioSource;
+    private AudioClip[] spellChargeAudioClips;
+
     [System.Serializable]
     public class ChargeInfo
     {
@@ -54,6 +57,19 @@ public class DefaultSpellcraft : MonoBehaviour
     private readonly int chargingMagicHash = Animator.StringToHash("ChargingMagic");
     #endregion
 
+    public void Awake()
+    {
+        playerAudioSource = GameObject.Find("Player").GetComponent<AudioSource>();
+        spellChargeAudioClips = new AudioClip[5]
+        {
+            Resources.Load("Cinematic/BAS_CIN_Creature_Wind_Loop") as AudioClip,
+            Resources.Load("Cinematic/BAS_CIN_PinkBall_Fire_01") as AudioClip,
+            Resources.Load("Cinematic/BAS_CIN_PinkBall_Fire_02") as AudioClip,
+            Resources.Load("Cinematic/BAS_CIN_PinkBall_Fire_03") as AudioClip,
+            Resources.Load("Cinematic/BAS_CIN_BigBallFire") as AudioClip
+        };
+    }
+
     public void EnableMagic()
     {
 
@@ -62,6 +78,8 @@ public class DefaultSpellcraft : MonoBehaviour
 
         InputManager.OnUseDown += OnCharge;
         InputManager.OnUseUp += OffCharge;
+
+        Debug.Log("Enable Magic");
     }
 
     public void DisableMagic()
@@ -70,6 +88,8 @@ public class DefaultSpellcraft : MonoBehaviour
         Spellcraft[SpellSelect].Charge.OnCharge[0].Deactivate();
         InputManager.OnUseDown -= OnCharge;
         InputManager.OnUseUp -= OffCharge;
+
+        Debug.Log("Disable Magic");
     }
 
     private void OnDestroy()
@@ -97,6 +117,10 @@ public class DefaultSpellcraft : MonoBehaviour
             // SPELL SOUND
             SpellChargeStart.Post(gameObject);
             startRotation = transform.rotation;
+
+            playerAudioSource.loop = true;
+            playerAudioSource.clip = spellChargeAudioClips[0];
+            playerAudioSource.Play();
         }
     }
 
@@ -162,6 +186,10 @@ public class DefaultSpellcraft : MonoBehaviour
     {
         PlayerManager.Instance.ResumeAttacking(this.gameObject);
         PlayerManager.Instance.ResumeMovement(this.gameObject);
+
+        playerAudioSource.Stop();
+        playerAudioSource.loop = false;
+
         if (Spellcraft[SpellSelect].IsAvailable)
         {
             PlayerManager.Instance.playerAnimator.ResetTrigger(chargeMagicHash);
@@ -171,6 +199,7 @@ public class DefaultSpellcraft : MonoBehaviour
             if (PlayerManager.Instance.playerAnimator.GetBool(canShootMagicHash))
             {
                 SpellChargeStop.Post(gameObject);
+
                 // Activate Spells
                 PlayerManager.Instance.playerAnimator.SetBool(canShootMagicHash, false);
                 for (int R = 0; R < Spellcraft[SpellSelect].Release.OnRelease.Count; R++)
@@ -183,6 +212,8 @@ public class DefaultSpellcraft : MonoBehaviour
                     // SPELL SOUND
                     SpellChargeLevel.SetGlobalValue(Spellcraft[SpellSelect].Charge.ChargeAmount * 100);
                     SpellCast.Post(this.gameObject);
+
+                    playerAudioSource.PlayOneShot(spellChargeAudioClips[Random.Range(1, 5)]);
                 }
             }
         }

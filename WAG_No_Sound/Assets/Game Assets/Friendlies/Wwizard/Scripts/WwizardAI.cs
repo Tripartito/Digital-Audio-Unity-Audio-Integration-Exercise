@@ -9,6 +9,10 @@ using UnityEngine.AI;
 
 public class WwizardAI : Creature
 {
+    public AudioSource wizardAudioSource;
+    private AudioClip[] wizardPoofAudioClips;
+    private AudioClip wizardStaffAudioClip;
+
     [Header("Wwise")]
     public AK.Wwise.Event PoofGimmickSound;
     public AK.Wwise.Event StaffHitGroundSound;
@@ -33,6 +37,13 @@ public class WwizardAI : Creature
     private readonly int randomTalkHash = Animator.StringToHash("RandomTalk");
 
     #endregion
+
+    private void Awake()
+    {
+        wizardAudioSource = GetComponent<AudioSource>();
+        wizardPoofAudioClips = new AudioClip[2]{ Resources.Load("Wwizard/BAS_Wizard_Poof_02") as AudioClip, Resources.Load("Wwizard/BAS_Wizard_Poof_03") as AudioClip };
+        wizardStaffAudioClip = Resources.Load("Character/Weapons/BAS_imp_axe_dirt") as AudioClip;
+    }
 
     public void TalkAnimation_CalculateNew()
     {
@@ -59,6 +70,7 @@ public class WwizardAI : Creature
         {
             GameObject p = Instantiate(Gimmick1PoofParticles, Gimmick1PoofTransform.transform.position + Gimmick1Displacement, Quaternion.identity) as GameObject;
             PoofGimmickSound.Post(p);
+            wizardAudioSource.PlayOneShot(wizardPoofAudioClips[Random.Range(0, 2)], 0.4f);
             Destroy(p, 5f);
         }
     }
@@ -98,5 +110,6 @@ public class WwizardAI : Creature
     {
         matChecker.CheckMaterial(gameObject);
         StaffHitGroundSound.Post(gameObject);
+        wizardAudioSource.PlayOneShot(wizardStaffAudioClip, 0.4f);
     }
 }

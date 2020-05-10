@@ -11,6 +11,17 @@ using UnityEngine.Events;
 
 public class Weapon : MonoBehaviour, IInteractable
 {
+    private string lastMaterialHit;
+    private AudioSource weaponAudioSource;
+
+    //Dagger, Sword, Axe, PickAxe, Hammer
+    //Dirt, Grass, Stone, Sand, Wood, Crate, Barrel, Agent
+    private readonly Dictionary<string, uint> surfaceTypeMap = new Dictionary<string, uint>();
+    private readonly Dictionary<string, uint> weaponTypeMap = new Dictionary<string, uint>();
+    private readonly AudioClip[,] weaponAudioClips = new AudioClip[5, 8];
+    private AudioClip weaponPickupAudioClip;
+    private AudioClip[] weaponEquipAudioClips;
+
     [Header("WWISE")]
     public AK.Wwise.Event WeaponImpact = new AK.Wwise.Event();
     public AK.Wwise.Switch WeaponTypeSwitch = new AK.Wwise.Switch();
@@ -59,6 +70,130 @@ public class Weapon : MonoBehaviour, IInteractable
     public bool applyBonusDamage = false;
     #endregion
 
+    public void Awake()
+    {
+        weaponAudioSource = GameObject.Find("WeaponHolder").GetComponent<AudioSource>();
+
+        weaponPickupAudioClip = Resources.Load("Character/Weapons/BAS_pickUpWeapon_001") as AudioClip;
+        weaponEquipAudioClips = new AudioClip[5]
+        {
+            Resources.Load("Objects/Pickups/BAS_Pickup_WeaponType_Dagger") as AudioClip,
+            Resources.Load("Objects/Pickups/BAS_Pickup_WeaponType_Sword_01") as AudioClip,
+            Resources.Load("Objects/Pickups/BAS_Pickup_WeaponType_Axe_01") as AudioClip,
+            Resources.Load("Objects/Pickups/BAS_Pickup_WeaponType_Pickaxe_01") as AudioClip,
+            Resources.Load("Objects/Pickups/BAS_Pickup_WeaponType_Hammer_01") as AudioClip
+        };
+
+        // Weapon Hit Sounds BEGIN ----------------------------------------------------------------
+        weaponTypeMap.Add("Player_Weapon_Type / Dagger", 0);
+        weaponTypeMap.Add("Player_Weapon_Type / Sword", 1);
+        weaponTypeMap.Add("Player_Weapon_Type / Axe", 2);
+        weaponTypeMap.Add("Player_Weapon_Type / PickAxe", 3);
+        weaponTypeMap.Add("Player_Weapon_Type / Hammer", 4);
+
+        surfaceTypeMap.Add("Surface_Type / Dirt", 0);
+        surfaceTypeMap.Add("Surface_Type / Grass", 1);
+        surfaceTypeMap.Add("Surface_Type / Leaves", 2);
+        surfaceTypeMap.Add("Surface_Type / Stone", 3);
+        surfaceTypeMap.Add("Surface_Type / Wood", 4);
+        surfaceTypeMap.Add("Surface_Type / Barrel", 5);
+        surfaceTypeMap.Add("Surface_Type / Crate", 6);
+        surfaceTypeMap.Add("Surface_Type / Agent", 7);
+
+        //Dagger, Sword, Axe, PickAxe, Hammer
+        for (int i = 0; i < 5; ++i)
+        {
+            //Dirt, Grass, Leaves, Stone, Wood, Crate, Barrel, Agent
+            for (int j = 0; j < 8; ++j)
+            {
+                string loadString = "Character/";
+
+                if (j == 7) //"Impact_Bump" //Agent (default)
+                {
+                    loadString += "Weapons/Impact_Bump";
+                    weaponAudioClips[i, j] = Resources.Load(loadString) as AudioClip;
+                }
+                //"BAS_Impact_Hammer_SurfaceType_Barrel"  // Barrles and Crates
+                //"BAS_Impact_Axe_SurfaceType_Crate"
+                else if (j > 4)
+                {
+                    loadString += "Impact/BAS_Impact";
+
+                    switch (i)
+                    {
+                        case 0:
+                            loadString += "_Dagger";
+                            break;
+                        case 1:
+                            loadString += "_Sword";
+                            break;
+                        case 2:
+                            loadString += "_Axe";
+                            break;
+                        case 3:
+                            loadString += "_PickAxe";
+                            break;
+                        case 4:
+                            loadString += "_Hammer";
+                            break;
+                    }
+
+                    switch (j)
+                    {
+                        case 5:
+                            loadString += "_SurfaceType_Barrel";
+                            break;
+                        case 6:
+                            loadString += "_SurfaceType_Crate";
+                            break;
+                    }
+
+                    weaponAudioClips[i, j] = Resources.Load(loadString) as AudioClip;
+                }
+                //"BAS_imp_axe_grass"         //Materials
+                //"BAS_imp_dagger_stone_2"
+                else
+                {
+                    loadString += "Weapons/BAS_imp";
+
+                    if (i == 2) { loadString += "_axe"; }
+                    else if (i > 2 || i == 1) { loadString += "_sword"; }
+                    else if (i == 0) { loadString += "_dagger"; }
+
+                    switch (j)
+                    {
+                        case 0:
+                            loadString += "_dirt";
+                            break;
+                        case 1:
+                            loadString += "_grass";
+                            break;
+                        case 2:
+                            loadString += "_leaves";
+                            break;
+                        case 3:
+                            loadString += "_stone";
+                            break;
+                        case 4:
+                            if (i == 2)    //Workaround for lack of axe/wood sound
+                                loadString = "Character/Weapons/BAS_imp_sword_wood";
+                            else
+                                loadString += "_wood";
+                            break;
+                    }
+
+                    weaponAudioClips[i, j] = Resources.Load(loadString) as AudioClip;
+
+                    if (weaponAudioClips[i, j] == null)
+                    {
+                        weaponAudioClips[i, j] = Resources.Load(loadString + "_2") as AudioClip;
+                    }
+                }
+            }
+            // Weapon Hit Sounds END ----------------------------------------------------------------
+        }
+    }
+
     public void EnableHitbox()
     {
         //Reset list of already hit GameObjects (since this is a new swing)
@@ -84,6 +219,7 @@ public class Weapon : MonoBehaviour, IInteractable
                     if (PickupEventOnPickup)
                     {
                         PlayerManager.Instance.StartPickupEvent();
+                        weaponAudioSource.PlayOneShot(weaponPickupAudioClip);
                     }
                     PlayerManager.Instance.pickedUpWeapons.Add(weaponType);
                     PlayerManager.Instance.pickedUpWeaponObjects.Add(gameObject);
@@ -121,6 +257,10 @@ public class Weapon : MonoBehaviour, IInteractable
         prefab.transform.parent = PlayerManager.Instance.weaponSlot.transform;
         Utility.StripGameObjectFromComponents(gameObject, typeof(Pickup));
         equipped = true;
+
+        uint weaponEquipped = 0;
+        weaponTypeMap.TryGetValue(WeaponTypeSwitch.Name, out weaponEquipped);
+        weaponAudioSource.PlayOneShot(weaponEquipAudioClips[weaponEquipped]);
     }
 
     public void UnequipWeapon()
@@ -194,6 +334,8 @@ public class Weapon : MonoBehaviour, IInteractable
                         {
                             sm.material.SetValue(transform.parent.gameObject); // Set Impact Material
                                                                                //print("New Impact Material: "+ sm.gameObject.name);
+                            lastMaterialHit = sm.material.Name;
+                            Debug.Log(lastMaterialHit);
                         }
                     }
 
@@ -237,6 +379,14 @@ public class Weapon : MonoBehaviour, IInteractable
         alreadyHitObjects.Add(HitObj);
         WeaponImpact.Post(transform.parent.gameObject);
 
+        uint weaponTypeMapVal = 0;
+        weaponTypeMap.TryGetValue(WeaponTypeSwitch.Name, out weaponTypeMapVal);
+
+        uint materialSurfaceMapVal = 0;
+        if (!surfaceTypeMap.TryGetValue(lastMaterialHit, out materialSurfaceMapVal))
+            materialSurfaceMapVal = 7;
+
+        weaponAudioSource.PlayOneShot(weaponAudioClips[weaponTypeMapVal, materialSurfaceMapVal]);
     }
 
 }

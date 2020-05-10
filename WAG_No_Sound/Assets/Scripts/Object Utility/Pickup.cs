@@ -6,10 +6,18 @@
 
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.Events;
 
 public class Pickup : MonoBehaviour, IInteractable
 {
+	private AudioSource playerAudioSource;
+
+	private readonly Dictionary<string, uint> itemTypeMap = new Dictionary<string, uint>();
+	//Book, Crystals, EvilEssence, Key, Mushroom, PineCone, Generic
+	private AudioClip[] pickupAudioClips;
+	private AudioClip[] crystalsAudioClips;
+
 	public GameObject pickupParticles;
 	public bool DestroyOnPickup = false;
 
@@ -43,6 +51,35 @@ public class Pickup : MonoBehaviour, IInteractable
 	//Events
 	public UnityEvent OnBecameFocus;
 	public UnityEvent OnInteraction;
+
+	void Awake()
+	{
+		playerAudioSource = GameObject.Find("Player").GetComponent<AudioSource>();
+
+		itemTypeMap.Add("Player_Pickup_ItemType / Book", 0);
+		itemTypeMap.Add("Player_Pickup_ItemType / EvilEssence", 1);
+		itemTypeMap.Add("Player_Pickup_ItemType / Key", 2);
+		itemTypeMap.Add("Player_Pickup_ItemType / Mushroom", 3);
+		itemTypeMap.Add("Player_Pickup_ItemType / PineCone", 4);
+		itemTypeMap.Add("Player_Pickup_ItemType / CrystalShard", 5);
+
+		pickupAudioClips = new AudioClip[6]
+		{
+			Resources.Load("Objects/Pickups/BAS_Pickup_Book_01") as AudioClip,
+			Resources.Load("Objects/Pickups/BAS_Pickup_EvilEssence") as AudioClip,
+			Resources.Load("Objects/Pickups/BAS_Pickup_Key_01") as AudioClip,
+			Resources.Load("Objects/Pickups/BAS_Pickup_Mushroom_01") as AudioClip,
+			Resources.Load("Objects/Pickups/BAS_Pickup_PineCone_01") as AudioClip,
+			Resources.Load("Objects/Pickups/BAS_Pickup_Generic_05") as AudioClip
+		};
+
+		crystalsAudioClips = new AudioClip[3]
+		{
+			Resources.Load("Objects/Pickups/BAS_Pickup_Crystals_01") as AudioClip,
+			Resources.Load("Objects/Pickups/BAS_Pickup_Crystals_02") as AudioClip,
+			Resources.Load("Objects/Pickups/BAS_Pickup_Crystals_03") as AudioClip
+		};
+	}
 
 	void Start()
 	{
@@ -191,8 +228,15 @@ public class Pickup : MonoBehaviour, IInteractable
 
 			if (interactionSound)
 			{
-				
 				PickUpEvent.Post(gameObject);
+
+				uint itemPicked;
+				if (!itemTypeMap.TryGetValue(PickupType.Name, out itemPicked) && PickupType.Name != "")	//IF mapping failed but there's something to pick up
+					playerAudioSource.PlayOneShot(pickupAudioClips[5]);	//Generic
+				else if (itemPicked == 5)										// IF mapping == crystals
+					playerAudioSource.PlayOneShot(crystalsAudioClips[Random.Range(0, 3)]); //Random crystal
+				else if (PickupType.Name != "")
+					playerAudioSource.PlayOneShot(pickupAudioClips[itemPicked]); //Appropiate Sound
 			}
 			if (pickupParticles != null)
 			{

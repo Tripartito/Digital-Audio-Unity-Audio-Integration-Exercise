@@ -12,6 +12,12 @@ public delegate void DeathMessage();
 public delegate void NewWeaponEvent();
 public class PlayerManager : Singleton<PlayerManager>
 {
+    //CITM Code
+    private AudioSource playerAudioSource;
+    private AudioClip[] heartAudioClips = new AudioClip[2];
+    private float[] heartTimes = new float[2];
+    private uint heartBeatStage = 0;
+    private float heartBeatStart = 0.0f;
 
     public static event DeathMessage OnDeathMessage;
     public static NewWeaponEvent OnNewWeaponPickedUp;
@@ -108,6 +114,10 @@ public class PlayerManager : Singleton<PlayerManager>
 
     void Awake()
     {
+        playerAudioSource = GameObject.Find("Player").GetComponent<AudioSource>();
+        heartAudioClips = new AudioClip[2]{ Resources.Load("Character/Heartbeat_Dub") as AudioClip, Resources.Load("Character/Heartbeat_Dub2") as AudioClip };
+        heartTimes = new float[2]{ 160.0f, 600.0f };
+
         EquippedInventory = new InventoryObjects();
         isAlive = true;
 
@@ -221,6 +231,21 @@ public class PlayerManager : Singleton<PlayerManager>
             }
         }
 
+        if (HealthOfPlayer < 30.0f && HealthOfPlayer > 0.0f)
+        {
+            float gameTime = Time.time * 1000.0f;
+            float timePassed = gameTime - heartBeatStart;
+
+            if (timePassed > heartTimes[1])
+            {
+                heartBeatStart = gameTime;
+                heartBeatStage = 0;
+            }
+            else if (timePassed > heartTimes[0] && heartBeatStage == 1)
+                playerAudioSource.PlayOneShot(heartAudioClips[heartBeatStage++]);
+            else if (heartBeatStage == 0)
+                playerAudioSource.PlayOneShot(heartAudioClips[heartBeatStage++]);
+        }
     }
 
     #region HEALTH
