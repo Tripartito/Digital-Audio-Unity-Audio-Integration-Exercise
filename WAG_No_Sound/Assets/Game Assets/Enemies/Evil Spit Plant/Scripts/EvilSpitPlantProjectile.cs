@@ -7,9 +7,16 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.SceneManagement;
 
 public class EvilSpitPlantProjectile : MonoBehaviour
 {
+    private AudioSource projectileAudioSource;
+
+    private AudioClip shotAudioClip;
+    private AudioClip[] impactAudioClips;
+    private AudioClip[] hurtAudioClips;
+
     [Header("Wwise")]
     public AK.Wwise.Event ContinuousSoundStart;
     public AK.Wwise.Event ContinuousSoundStop;
@@ -38,6 +45,24 @@ public class EvilSpitPlantProjectile : MonoBehaviour
     private IEnumerator movementRoutine;
     #endregion
 
+    public void Awake()
+    {
+        projectileAudioSource = gameObject.AddComponent<AudioSource>();
+        projectileAudioSource.clip = Resources.Load("Creatures/BAS_Evil_SpitPlant_Shoot_LP_01") as AudioClip;
+        projectileAudioSource.loop = true;
+        projectileAudioSource.spatialBlend = 1.0f;
+        projectileAudioSource.rolloffMode = AudioRolloffMode.Linear;
+        projectileAudioSource.maxDistance = 20.0f;
+
+        impactAudioClips = new AudioClip[3];
+        hurtAudioClips = new AudioClip[3];
+        for (int i = 0; i < 3; ++i)
+        {
+            impactAudioClips[i] = Resources.Load("Creatures/BAS_Evil_SpitPlant_HurtImpact_0" + (i + 1).ToString()) as AudioClip;
+            hurtAudioClips[i] = Resources.Load("Creatures/BAS_Evil_SpitPlant_ImpactPlayer_0" + (i + 1).ToString()) as AudioClip;
+        }
+    }
+
     void OnEnable()
     {
         rb = GetComponent<Rigidbody>();
@@ -55,6 +80,9 @@ public class EvilSpitPlantProjectile : MonoBehaviour
     IEnumerator MoveSpitBullet()
     {
         ContinuousSoundStart.Post(gameObject);
+
+        projectileAudioSource.Play();
+
         while (time < duration)
         {
             rb.velocity = transform.forward * speed;
@@ -128,6 +156,8 @@ public class EvilSpitPlantProjectile : MonoBehaviour
 
             ContinuousSoundStop.Post(gameObject);
 
+            projectileAudioSource.Stop();
+
             GetComponent<Collider>().enabled = false;
             time = duration;
             rb.velocity = Vector3.zero;
@@ -138,10 +168,12 @@ public class EvilSpitPlantProjectile : MonoBehaviour
             if (hitSomething)
             {
                 ImpactSound.Post(go.gameObject);
+                projectileAudioSource.PlayOneShot(hurtAudioClips[Random.Range(0, 3)]);
             }
             else
             {
                 NoImpactSound.Post(go.gameObject);
+                projectileAudioSource.PlayOneShot(impactAudioClips[Random.Range(0, 3)]);
             }
 
             Destroy(go, 5f);

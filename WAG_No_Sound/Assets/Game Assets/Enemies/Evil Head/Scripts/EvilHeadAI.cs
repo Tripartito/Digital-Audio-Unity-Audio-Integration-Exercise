@@ -10,6 +10,16 @@ using UnityEngine;
 
 public class EvilHeadAI : Creature
 {
+    private AudioSource headAudioSource;
+
+    private AudioClip hoverAudioClip;
+    private AudioClip telegraphAudioClip;
+
+    private AudioClip[] chargeAudioClips;
+    private AudioClip[] biteAudioClips;
+    private AudioClip[] hurtAudioClips;
+    private AudioClip[,] deathAudioClips;
+
     [Header("Evil Head Specifics")]
     public GameObject SmokeFX;
     public GameObject deathFX;
@@ -42,12 +52,33 @@ public class EvilHeadAI : Creature
         {
             anim = GetComponent<Animator>();
         }
+
+        headAudioSource = GetComponent<AudioSource>();
+        hoverAudioClip = Resources.Load("Creatures/BAS_Evil_Head_Hover_LP") as AudioClip;
+        telegraphAudioClip = Resources.Load("Creatures/BAS_Evil_Head_Charge_Bite") as AudioClip;
+
+        biteAudioClips = new AudioClip[3];
+        chargeAudioClips = new AudioClip[3];
+        hurtAudioClips = new AudioClip[3];
+        deathAudioClips = new AudioClip[3, 2];
+        for (int i = 0; i < 3; ++i)
+        {
+            biteAudioClips[i] = Resources.Load("Creatures/BAS_Evil_Head_Bite_0" + (i + 1).ToString()) as AudioClip;
+            chargeAudioClips[i] = Resources.Load("Creatures/BAS_Evil_Head_Charge_0" + (i + 1).ToString()) as AudioClip;
+            hurtAudioClips[i] = Resources.Load("Creatures/BAS_Evil_Head_Hurt_0" + (i + 1).ToString()) as AudioClip;
+            deathAudioClips[i, 0] = Resources.Load("Creatures/BAS_Evil_Head_Death_0" + (i + 1).ToString()) as AudioClip;
+            deathAudioClips[i, 1] = Resources.Load("Creatures/BAS_Evil_Head_Death_Vox_0" + (i + 1).ToString()) as AudioClip;
+        }
     }
 
     public override void Start(){
 		base.Start();
         HoverSoundStart.Post(this.gameObject);
-	}
+
+        headAudioSource.loop = true;
+        headAudioSource.clip = hoverAudioClip;
+        headAudioSource.Play();
+    }
 
     public override void OnSpotting()
     {
@@ -78,6 +109,8 @@ public class EvilHeadAI : Creature
         targetLocation = targetOfNPC.transform.position + Vector3.up;
         StartCoroutine(RotateTowardsTarget(targetLocation, 1f));
         TelegraphSound.Post(gameObject);
+
+        headAudioSource.PlayOneShot(telegraphAudioClip, 1.0f);
     }
 
 
@@ -120,6 +153,8 @@ public class EvilHeadAI : Creature
         TelegraphSound.Stop(gameObject,0, AkCurveInterpolation.AkCurveInterpolation_Linear);
         ChargeSound.Post(gameObject);
 
+        headAudioSource.PlayOneShot(chargeAudioClips[Random.Range(0, 3)]);
+
         Vector3 currentPosition = transform.position;
         Vector3 destination = targetLocation + ((targetLocation) - currentPosition).normalized * 2f;
 
@@ -160,13 +195,28 @@ public class EvilHeadAI : Creature
         ReenableMovement();
     }
 
+    override public void OnDamageReset()
+    {
+        headAudioSource.PlayOneShot(hurtAudioClips[Random.Range(0, 3)]);
+    }
+
     public void Explode()
     {
         SetMovementSpeed(0f);
         //print(Time.realtimeSinceStartup + ": Explode");
         HoverSoundEnd.Post(this.gameObject);
 
+        headAudioSource.Stop();
+
         GameObject fx = (GameObject)Instantiate(deathFX, transform.position, Quaternion.identity);
+
+        AudioSource audSrc = fx.AddComponent<AudioSource>();
+        audSrc.spatialBlend = 1.0f;
+
+        int rng = Random.Range(0, 3);
+        audSrc.PlayOneShot(deathAudioClips[rng, 0]);
+        audSrc.PlayOneShot(deathAudioClips[rng, 1]);
+
         Destroy(fx, 5f);
 
         //This following section makes sure that the particles of the Evil Head doesn't just suddenly disappear in a flash. Rather, they stop emitting and are removed after some time 
@@ -190,5 +240,7 @@ public class EvilHeadAI : Creature
     public void PlayBiteSound()
     {
         BiteSound.Post(this.gameObject);
+
+        headAudioSource.PlayOneShot(biteAudioClips[Random.Range(0, 3)]);
     }
 }
