@@ -5059,6 +5059,8 @@ MonoBehaviour:
   startPosition: {x: 0, y: 0, z: 0}
   daytime: 0
   AttackType: 8
+  mixer_group: {fileID: 243384777161826078, guid: 8b123a66319d5b7468e7b3643ed68a6e,
+    type: 2}
   SmokeFX: {fileID: 1000012016212088}
   deathFX: {fileID: 1000013139223148, guid: f5963bb22ede54f15ab3ddb9e132c119, type: 3}
   keepOnDeath: {fileID: 1000012016212088}

@@ -7,9 +7,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 public class EvilHeadAI : Creature
 {
+    [Header("Audio Mixer Group for SFX")]
+    public AudioMixerGroup mixer_group;
+
+
     private AudioSource headAudioSource;
 
     private AudioClip hoverAudioClip;
@@ -211,6 +216,7 @@ public class EvilHeadAI : Creature
         GameObject fx = (GameObject)Instantiate(deathFX, transform.position, Quaternion.identity);
 
         AudioSource audSrc = fx.AddComponent<AudioSource>();
+        audSrc.outputAudioMixerGroup = mixer_group;
         audSrc.spatialBlend = 1.0f;
 
         int rng = Random.Range(0, 3);
